@@ -287,60 +287,11 @@
     }
   }
 
-  // --- HIGH-FREQUENCY SCANNER ENGINE (3s Ticks) ---
+  // --- HIGH-FREQUENCY SCANNER ENGINE (3s REST API Polling) ---
   function tickScanner() {
     state.scanTickCount++;
-    logDebug('SCANNER', `Tick #${state.scanTickCount} - Scanning order books across Kalshi & Polymarket APIs...`);
-
-    // Auto-stream discovery: generate 5 new markets every 2 ticks (6s) if enabled
-    if (state.autoStreamEnabled && state.scanTickCount % 2 === 0) {
-      discoverNewMarkets(5);
-      return;
-    }
-
-    let maxRoiThisTick = -999;
-    let highRoiTriggered = false;
-
-    // Update market prices with random micro noise deltas to simulate live order book ticks
-    state.opportunities = state.opportunities.map(m => {
-      // Noise between -0.01 and +0.01
-      const deltaK = (Math.random() - 0.5) * 0.02;
-      const deltaP = (Math.random() - 0.5) * 0.02;
-
-      let newKY = Math.min(0.95, Math.max(0.05, m.kalshi_yes + deltaK));
-      let newKN = Number((1.00 - newKY).toFixed(2));
-      let newPY = Math.min(0.95, Math.max(0.05, m.poly_yes + deltaP));
-      let newPN = Number((1.00 - newPY).toFixed(2));
-
-      newKY = Number(newKY.toFixed(2));
-      newPY = Number(newPY.toFixed(2));
-
-      const updated = {
-        ...m,
-        kalshi_yes: newKY,
-        kalshi_no: newKN,
-        poly_yes: newPY,
-        poly_no: newPN,
-        price_history_k: [...m.price_history_k.slice(1), newKY],
-        price_history_p: [...m.price_history_p.slice(1), newPN]
-      };
-
-      const arb = calculateArbitrage(updated);
-      updated.arb = arb;
-
-      if (arb.net_roi > maxRoiThisTick) maxRoiThisTick = arb.net_roi;
-      if (arb.net_roi > 2.5) highRoiTriggered = true;
-
-      return updated;
-    });
-
-    if (highRoiTriggered && state.scanTickCount > 1) {
-      playAlertChime();
-    }
-
-    logDebug('CALC', `Top Net ROI detected: +${maxRoiThisTick.toFixed(2)}%`);
-
-    renderUI();
+    logDebug('SCANNER', `Tick #${state.scanTickCount} - Polling live order books across Kalshi & Polymarket REST APIs...`);
+    fetchMarkets();
   }
 
   // --- API ROUTING & BACKEND BASE URL HELPER ---
@@ -1059,91 +1010,6 @@
       state.logs = [];
       renderLogs();
     });
-
-    // Discover More & Unlimited Auto-Stream Controls
-    const btnDiscoverMore = document.getElementById('btnDiscoverMore');
-    if (btnDiscoverMore) {
-      btnDiscoverMore.addEventListener('click', () => {
-        discoverNewMarkets(20);
-      });
-    }
-
-    const btnAutoStream = document.getElementById('btnAutoStream');
-    if (btnAutoStream) {
-      btnAutoStream.addEventListener('click', () => {
-        state.autoStreamEnabled = !state.autoStreamEnabled;
-        btnAutoStream.textContent = state.autoStreamEnabled ? '♾️ Auto-Stream: ON (Active)' : '♾️ Auto-Stream: OFF';
-        btnAutoStream.style.borderColor = state.autoStreamEnabled ? 'var(--accent-green)' : 'var(--accent-cyan)';
-        btnAutoStream.style.color = state.autoStreamEnabled ? 'var(--accent-green)' : 'var(--accent-cyan)';
-        logDebug('SCANNER', `Unlimited auto-stream discovery toggled: ${state.autoStreamEnabled ? 'ACTIVE (+5 markets every 6s)' : 'OFF'}`);
-      });
-    }
-  }
-
-  // --- DYNAMIC UNLIMITED MARKET DISCOVERY GENERATOR ---
-  let marketCounter = 9;
-
-  function discoverNewMarkets(count = 20) {
-    const verifiedStreamPool = [
-      { t: "OpenAI vs Anthropic: OpenAI IPOs First", c: "CRYPTO", kt: "KXOAIANTH-40-OAI", pu: "https://polymarket.com/event/will-anthropic-or-openai-ipo-first", ky: 0.52, py: 0.59 },
-      { t: "Fed Funds Rate 2026: 0 Rate Cuts (0 bps)", c: "MACRO", kt: "KXFEDCUTS-2026-0", pu: "https://polymarket.com/event/how-many-fed-rate-cuts-in-2026", ky: 0.39, py: 0.88 },
-      { t: "Emmanuel Macron Out as President of France in 2026", c: "POLITICS", kt: "KXG7LEADEROUT-26DEC31-EMAC", pu: "https://polymarket.com/event/macron-out-in-2026", ky: 0.41, py: 0.48 },
-      { t: "SpaceX Exploration: Crewed Mars Mission by 2030", c: "CRYPTO", kt: "KXELONMARS-30", pu: "https://polymarket.com/event/spacex-crewed-mars-landing-by-2030", ky: 0.44, py: 0.52 },
-      { t: "Xi Jinping Out as Leader Before 2027", c: "POLITICS", kt: "KXXIOUT-27JAN01", pu: "https://polymarket.com/event/xi-jinping-out-before-2027", ky: 0.05, py: 0.11 },
-      { t: "Fintech IPO Race: Ramp IPOs Before Brex", c: "CRYPTO", kt: "KXRAMPBREX-40-RAMP", pu: "https://polymarket.com/event/will-ramp-or-brex-ipo-first", ky: 0.41, py: 0.48 },
-      { t: "Payroll Tech IPO Race: Deel IPOs Before Rippling", c: "CRYPTO", kt: "KXDEELRIP-40-DEEL", pu: "https://polymarket.com/event/deel-vs-rippling-ipo-first", ky: 0.16, py: 0.23 },
-      { t: "Climate Target: Global Warming Exceeds +1.5°C in 2026", c: "MACRO", kt: "KXWARMING-2026-1.5", pu: "https://polymarket.com/event/global-warming-exceeds-1-5c-in-2026", ky: 0.58, py: 0.64 },
-      { t: "NATO Leadership: Next Secretary General", c: "POLITICS", kt: "KXNEXTNATOSECGEN-99", pu: "https://polymarket.com/event/who-will-be-the-next-secretary-general-of-nato", ky: 0.35, py: 0.42 },
-      { t: "Geopolitics: China & India Border Standoff", c: "POLITICS", kt: "KXCHINAINDIA-2026", pu: "https://polymarket.com/event/china-x-india-military-clash-by-december-31", ky: 0.31, py: 0.37 },
-      { t: "JPMorgan Chase: Next CEO Appointment", c: "MACRO", kt: "KXNEWROLEJP-35DEC", pu: "https://polymarket.com/event/who-will-be-the-next-ceo-of-jpmorgan-chase", ky: 0.36, py: 0.42 },
-      { t: "Goldman Sachs: Next CEO Succession", c: "MACRO", kt: "KXNEWROLEGS-35DEC", pu: "https://polymarket.com/event/who-will-be-the-next-ceo-of-goldman-sachs", ky: 0.39, py: 0.46 }
-    ];
-
-    const newItems = [];
-    for (let i = 0; i < count; i++) {
-      const poolIndex = (marketCounter + i) % verifiedStreamPool.length;
-      const base = verifiedStreamPool[poolIndex];
-      const seriesId = marketCounter + i;
-      const id = `opp-dyn-${Date.now()}-${seriesId}`;
-      const title = `${base.t} (Stream #${seriesId})`;
-      
-      const priceKY = Number((base.ky + (Math.random() * 0.04 - 0.02)).toFixed(2));
-      const priceKN = Number((1.00 - priceKY).toFixed(2));
-      const pricePY = Number((base.py + (Math.random() * 0.04 - 0.02)).toFixed(2));
-      const pricePN = Number((1.00 - pricePY).toFixed(2));
-
-      const vol = Math.floor(2000000 + Math.random() * 8000000);
-      const depthK = Math.floor(100000 + Math.random() * 400000);
-      const depthP = Math.floor(300000 + Math.random() * 900000);
-
-      const item = {
-        id: id,
-        title: title,
-        category: base.c,
-        expiry_date: `2026-12-31`,
-        kalshi_ticker: base.kt,
-        poly_ticker: `POLY-STREAM-${seriesId}`,
-        kalshi_url: `https://pro.kalshi.com/workspace/markets`,
-        poly_url: base.pu,
-        kalshi_yes: priceKY,
-        kalshi_no: priceKN,
-        poly_yes: pricePY,
-        poly_no: pricePN,
-        volume24h: vol,
-        depth_k: depthK,
-        depth_p: depthP,
-        price_history_k: [priceKY - 0.02, priceKY - 0.01, priceKY, priceKY, priceKY, priceKY],
-        price_history_p: [pricePY + 0.02, pricePY + 0.01, pricePY, pricePY, pricePY, pricePY]
-      };
-
-      item.arb = calculateArbitrage(item);
-      newItems.push(item);
-    }
-
-    marketCounter += count;
-    state.opportunities = [...state.opportunities, ...newItems];
-    logDebug('SCANNER', `⚡ Discovered ${count} real prediction market opportunities! Total active catalog: ${state.opportunities.length}`);
-    renderUI();
   }
 
   // --- APP INITIALIZATION ---
