@@ -257,6 +257,12 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                 poly_event = p_slug_map.get(pair["poly_slug"])
                 kalshi_event = kalshi_event_map.get(pair["kalshi_event_ticker"])
 
+                # Strict Live Ticker Validation:
+                # If the event ticker does NOT exist in live Kalshi open events API, REJECT IT
+                if not kalshi_event:
+                    print(f"[REJECT UNLISTED TICKER] Kalshi event ticker '{pair['kalshi_event_ticker']}' is not active on Kalshi Pro API")
+                    continue
+
                 # Step 4: Extract Live Expiration Timestamps from Both Exchanges
                 poly_exp = parse_date(poly_event.get("endDate")) if poly_event else "2026-12-31"
                 
