@@ -1,3 +1,17 @@
+"""
+Arbitrage Pulse - High-Frequency Prediction Market Backend & REST API Server
+================================================================================
+Architecture Overview:
+  - Serves frontend SPA static assets (HTML, CSS, JS bundles).
+  - Manages SQLite persistence for locked portfolio arbitrage trades (`portfolio.db`).
+  - Proxies and executes dynamic cross-exchange matching between Kalshi REST API v2
+    and Polymarket Gamma REST API.
+  - Simulates automated order execution (`POST /api/execute-trade`).
+
+Author: Antigravity AI Team / Jacob Amaral
+License: MIT
+"""
+
 import os
 import sys
 import json
@@ -9,7 +23,12 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 PORT = 8000
 DB_FILE = "portfolio.db"
 
+
 def init_db():
+    """
+    Initializes the local SQLite database schema for portfolio trade persistence.
+    Creates the 'trades' table if it does not already exist.
+    """
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
@@ -37,8 +56,17 @@ def init_db():
     conn.close()
     print("[DB] SQLite database initialized successfully: portfolio.db")
 
+
 class ArbitrageHandler(SimpleHTTPRequestHandler):
+    """
+    Custom HTTP Request Handler serving static frontend files and providing
+    REST API endpoints for trade persistence, market matching, and automated order execution.
+    """
+
     def send_json_response(self, data, status_code=200):
+        """
+        Utility method to output structured JSON HTTP responses with standard CORS headers.
+        """
         response_bytes = json.dumps(data).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json")

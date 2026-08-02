@@ -1,25 +1,38 @@
 /**
- * Arbitrage Pulse - Self-Contained Frontend Application Bundle
- * Real-time Binary Prediction Market Arbitrage Scanner, Risk Simulator & Portfolio Manager
+ * Arbitrage Pulse - Single-Page Binary Prediction Market Arbitrage Engine
+ * ==============================================================================
+ * Architecture Overview:
+ *  - Real-Time Scanner Engine: Evaluates order book prices every 3s across matched Kalshi & Polymarket pairs.
+ *  - Arbitrage Math Core: Evaluates Option A (Kalshi YES + Poly NO) vs Option B (Kalshi NO + Poly YES)
+ *    enforcing binary contract settlement rules ($1.00 payout per matched contract).
+ *  - Risk Simulator Modal: Performs interactive capital allocation ($1k default sizing), leg position sizing,
+ *    and automated order submission (`POST /api/execute-trade`).
+ *  - Portfolio Manager: Persists locked arbitrage trades to local SQLite (`portfolio.db`) and renders live KPIs.
+ *  - Audio & Visual Feedback: Features Web Audio API synthesizer chimes and Canvas HiDPI confetti system.
+ * 
+ * @author Antigravity AI Team / Jacob Amaral
+ * @license MIT
  */
 
 (function () {
   'use strict';
 
-  // --- STATE MANAGEMENT ---
+  /**
+   * Central Reactive Application State Container
+   */
   const state = {
-    opportunities: [],
-    portfolioTrades: [],
-    audioEnabled: true,
-    activeCategory: 'ALL',
-    searchQuery: '',
-    minRoiFilter: 0.0,
-    sortBy: 'net_roi',
-    selectedSimOpp: null,
-    selectedChartOpp: null,
-    scanTickCount: 0,
-    activeLogFilter: 'ALL',
-    logs: []
+    opportunities: [],       // Active market pairs being scanned
+    portfolioTrades: [],     // Locked trades fetched from SQLite database
+    audioEnabled: true,      // Web Audio sound toggle status
+    activeCategory: 'ALL',   // Active category tab filter ('ALL', 'MACRO', 'POLITICS', 'CRYPTO')
+    searchQuery: '',         // Title / ticker search query string
+    minRoiFilter: 0.0,       // Minimum ROI filter slider threshold
+    sortBy: 'net_roi',       // Sort criteria ('net_roi', 'annualized_apy', 'volume24h', 'days_to_expiry')
+    selectedSimOpp: null,    // Currently selected opportunity object inside Risk Simulator modal
+    selectedChartOpp: null,  // Currently selected opportunity object for HiDPI canvas chart
+    scanTickCount: 0,        // Total completed scanner tick cycles
+    activeLogFilter: 'ALL',   // Debug terminal log filter ('ALL', 'SCANNER', 'CALC', 'API', 'DB')
+    logs: []                 // In-memory debug log entries
   };
 
   // --- SEED OPPORTUNITIES DATA WITH 100% 1:1 MATCHED DUAL-EXCHANGE CONTRACT DEEP-LINKS & REAL API PRICES ---
