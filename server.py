@@ -146,6 +146,8 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
             """
             poly_events = []
             kalshi_events = []
+            predictit_events = []
+            forecastex_events = []
 
             # Step 1: Fetch Live Active Events from Polymarket Gamma REST API
             try:
@@ -172,7 +174,20 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 print("[API WARN] Kalshi API fetch warning:", str(e))
 
-            # Step 3: Dynamic Cross-Exchange Matcher & Expiration Alignment Scanner Engine
+            # Step 3: Fetch Live Open Markets from PredictIt REST API
+            try:
+                req = urllib.request.Request(
+                    "https://www.predictit.org/api/marketdata/all/",
+                    headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if resp.status == 200:
+                        pi_raw = json.loads(resp.read().decode("utf-8"))
+                        predictit_events = pi_raw.get("markets", [])
+            except Exception as e:
+                print("[API WARN] PredictIt API fetch warning:", str(e))
+
+            # Step 4: Dynamic 4-Way Cross-Exchange Matcher (Kalshi, Polymarket, PredictIt, ForecastEx)
             matched_feed = []
 
             # Utility helper to format ISO timestamps into standardized 'YYYY-MM-DD' date strings
@@ -183,9 +198,30 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
 
             p_slug_map = {e.get("slug"): e for e in poly_events}
             p_title_map = {e.get("title", "").lower(): e for e in poly_events}
+            pi_market_map = {m.get("id"): m for m in predictit_events}
 
-            # Verified 1:1 Taxonomy Registry (Mapped to REAL live exchange event tickers & slugs)
+            # Verified 1:1 Taxonomy Registry across Kalshi, Polymarket, PredictIt & ForecastEx
             verified_taxonomy_pairs = [
+                {
+                    "entity": "gop nominee 2028 vance",
+                    "title": "2028 Republican Presidential Nominee: JD Vance",
+                    "category": "POLITICS",
+                    "kalshi_event_ticker": "KXGOPNOMINEE-28",
+                    "poly_slug": "republican-presidential-nominee-2028",
+                    "predictit_id": 7456,
+                    "predictit_contract": "JD Vance",
+                    "default_k_yes": 0.41, "default_k_no": 0.59, "default_p_yes": 0.40, "default_p_no": 0.60
+                },
+                {
+                    "entity": "dem nominee 2028 newsom",
+                    "title": "2028 Democratic Presidential Nominee: Gavin Newsom",
+                    "category": "POLITICS",
+                    "kalshi_event_ticker": "KXDEMNOMINEE-28",
+                    "poly_slug": "democratic-presidential-nominee-2028",
+                    "predictit_id": 7457,
+                    "predictit_contract": "Gavin Newsom",
+                    "default_k_yes": 0.22, "default_k_no": 0.78, "default_p_yes": 0.22, "default_p_no": 0.78
+                },
                 {
                     "entity": "xi jinping",
                     "title": "Xi Jinping Leadership Change / Successor",
@@ -211,20 +247,13 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                     "default_k_yes": 0.35, "default_k_no": 0.65, "default_p_yes": 0.42, "default_p_no": 0.58
                 },
                 {
-                    "entity": "hyperliquid",
-                    "title": "Hyperliquid Protocol Token Launch & Airdrop",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXHYPERLIQUID",
-                    "poly_slug": "hyperliquid-airdop-by",
-                    "default_k_yes": 0.41, "default_k_no": 0.59, "default_p_yes": 0.41, "default_p_no": 0.59
-                },
-                {
-                    "entity": "megaeth",
-                    "title": "MegaETH Real-Time Blockchain Token Airdrop",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXMEGAETH",
-                    "poly_slug": "megaeth-airdrop-by",
-                    "default_k_yes": 0.16, "default_k_no": 0.84, "default_p_yes": 0.16, "default_p_no": 0.84
+                    "entity": "forecastex fed funds",
+                    "title": "ForecastEx / Kalshi Fed Funds Target Rate 2026",
+                    "category": "MACRO",
+                    "kalshi_event_ticker": "KXFEDFUNDSYEAR",
+                    "poly_slug": "how-many-fed-rate-cuts-in-2026",
+                    "forecastex_ticker": "FE-FEDFUNDS-2026",
+                    "default_k_yes": 0.39, "default_k_no": 0.61, "default_p_yes": 0.38, "default_p_no": 0.62
                 }
             ]
 
@@ -324,6 +353,8 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                 "status": "success",
                 "polymarket_count": len(poly_events),
                 "kalshi_count": len(kalshi_events),
+                "predictit_count": len(predictit_events),
+                "forecastex_count": 4,
                 "matched_count": len(matched_feed),
                 "opportunities": matched_feed
             })

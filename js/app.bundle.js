@@ -309,7 +309,7 @@
       const resp = await fetch(getApiUrl('/api/markets'));
       if (resp.ok) {
         const data = await resp.json();
-        logDebug('API', `Received Polymarket (${data.polymarket_count} events) & Kalshi (${data.kalshi_count} events)`);
+        logDebug('API', `Received Polymarket (${data.polymarket_count}), Kalshi (${data.kalshi_count}), PredictIt (${data.predictit_count || 0}) & ForecastEx (${data.forecastex_count || 0}) events`);
         
         if (Array.isArray(data.opportunities)) {
           state.opportunities = data.opportunities.map(item => {
