@@ -187,57 +187,35 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
             # Verified 1:1 Taxonomy Registry (Mapped to REAL live exchange event tickers & slugs)
             verified_taxonomy_pairs = [
                 {
-                    "entity": "openai anthropic",
-                    "title": "Will OpenAI or Anthropic IPO First?",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXOAIANTH-40",
-                    "kalshi_sub_ticker": "KXOAIANTH-40-OAI",
-                    "poly_slug": "will-anthropic-or-openai-ipo-first",
-                    "default_k_yes": 0.18, "default_k_no": 0.82, "default_p_yes": 0.11, "default_p_no": 0.89
-                },
-                {
-                    "entity": "ramp brex",
-                    "title": "Fintech IPO Race: Ramp IPOs Before Brex",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXRAMPBREX-40",
-                    "kalshi_sub_ticker": "KXRAMPBREX-40-RAMP",
-                    "poly_slug": "will-ramp-or-brex-ipo-first",
-                    "default_k_yes": 0.83, "default_k_no": 0.17, "default_p_yes": 0.52, "default_p_no": 0.48
-                },
-                {
-                    "entity": "deel rippling",
-                    "title": "Payroll Tech IPO Race: Deel IPOs Before Rippling",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXDEELRIP-40",
-                    "kalshi_sub_ticker": "KXDEELRIP-40-DEEL",
-                    "poly_slug": "deel-vs-rippling-ipo-first",
-                    "default_k_yes": 0.16, "default_k_no": 0.84, "default_p_yes": 0.23, "default_p_no": 0.77
-                },
-                {
                     "entity": "xi jinping",
-                    "title": "Xi Jinping Out as Leader Before 2027",
+                    "title": "Xi Jinping Leadership Change / Successor",
                     "category": "POLITICS",
-                    "kalshi_event_ticker": "KXXISUCCESSOR-45",
-                    "kalshi_sub_ticker": "KXXIOUT-27JAN01",
+                    "kalshi_event_ticker": "KXXISUCCESSOR",
                     "poly_slug": "xi-jinping-out-before-2027",
                     "default_k_yes": 0.05, "default_k_no": 0.95, "default_p_yes": 0.045, "default_p_no": 0.955
                 },
                 {
-                    "entity": "spacex mars",
-                    "title": "SpaceX Exploration: Crewed Mars Mission by 2030",
-                    "category": "CRYPTO",
-                    "kalshi_event_ticker": "KXSPACEXMARS-30",
-                    "kalshi_sub_ticker": "KXELONMARS-30",
-                    "poly_slug": "spacex-crewed-mars-landing-by-2030",
-                    "default_k_yes": 0.44, "default_k_no": 0.56, "default_p_yes": 0.52, "default_p_no": 0.48
+                    "entity": "emmanuel macron",
+                    "title": "Emmanuel Macron Out as President of France",
+                    "category": "POLITICS",
+                    "kalshi_event_ticker": "KXG7LEADEROUT",
+                    "poly_slug": "macron-out-in-2025",
+                    "default_k_yes": 0.41, "default_k_no": 0.59, "default_p_yes": 0.48, "default_p_no": 0.52
+                },
+                {
+                    "entity": "benjamin netanyahu",
+                    "title": "Israel Prime Minister Succession: Netanyahu Out",
+                    "category": "POLITICS",
+                    "kalshi_event_ticker": "KXNEXTISRAELPM",
+                    "poly_slug": "netanyahu-out-before-2027",
+                    "default_k_yes": 0.35, "default_k_no": 0.65, "default_p_yes": 0.42, "default_p_no": 0.58
                 },
                 {
                     "entity": "hyperliquid",
-                    "title": "Hyperliquid Protocol Airdrop Token Launch",
+                    "title": "Hyperliquid Protocol Token Launch & Airdrop",
                     "category": "CRYPTO",
                     "kalshi_event_ticker": "KXHYPERLIQUID",
-                    "kalshi_sub_ticker": "KXHYPERLIQUID-26DEC31",
-                    "poly_slug": "hyperliquid-airdrop-by",
+                    "poly_slug": "hyperliquid-airdop-by",
                     "default_k_yes": 0.41, "default_k_no": 0.59, "default_p_yes": 0.41, "default_p_no": 0.59
                 },
                 {
@@ -245,22 +223,27 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                     "title": "MegaETH Real-Time Blockchain Token Airdrop",
                     "category": "CRYPTO",
                     "kalshi_event_ticker": "KXMEGAETH",
-                    "kalshi_sub_ticker": "KXMEGAETH-26DEC31",
                     "poly_slug": "megaeth-airdrop-by",
                     "default_k_yes": 0.16, "default_k_no": 0.84, "default_p_yes": 0.16, "default_p_no": 0.84
                 }
             ]
 
-            kalshi_event_map = {e.get("event_ticker"): e for e in kalshi_events if e.get("event_ticker")}
+            # Helper for flexible ticker prefix matching on Kalshi API
+            def find_kalshi_event(prefix):
+                for e in kalshi_events:
+                    t = e.get("event_ticker", "")
+                    if t == prefix or t.startswith(prefix):
+                        return e
+                return None
 
             for pair in verified_taxonomy_pairs:
                 poly_event = p_slug_map.get(pair["poly_slug"])
-                kalshi_event = kalshi_event_map.get(pair["kalshi_event_ticker"])
+                kalshi_event = find_kalshi_event(pair["kalshi_event_ticker"])
 
                 # Strict Dual Live Event Validation:
                 # Require BOTH the Kalshi event ticker AND the Polymarket event slug to be active open events!
                 if not kalshi_event:
-                    print(f"[REJECT UNLISTED KALSHI EVENT] Kalshi event ticker '{pair['kalshi_event_ticker']}' is not active on Kalshi Pro API")
+                    print(f"[REJECT UNLISTED KALSHI EVENT] Kalshi event prefix '{pair['kalshi_event_ticker']}' is not active on Kalshi Pro API")
                     continue
 
                 if not poly_event:
@@ -317,7 +300,7 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                     "kalshi_expiry_date": kalshi_exp,    # Explicit Kalshi expiration date
                     "poly_expiry_date": poly_exp,        # Explicit Polymarket expiration date
                     "expirations_aligned": True,          # Verification status flag
-                    "kalshi_ticker": pair["kalshi_sub_ticker"],
+                    "kalshi_ticker": kalshi_event.get("event_ticker") if kalshi_event else pair["kalshi_event_ticker"],
                     "poly_ticker": f"POLY-{pair['entity'].replace(' ', '-').upper()}",
                     "kalshi_url": f"https://pro.kalshi.com/workspace/markets",
                     "poly_url": f"https://polymarket.com/event/{pair['poly_slug']}",
