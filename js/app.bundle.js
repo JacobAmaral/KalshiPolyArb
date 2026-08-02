@@ -459,11 +459,19 @@
     renderUI();
   }
 
+  // --- API ROUTING & BACKEND BASE URL HELPER ---
+  function getApiUrl(endpoint) {
+    if (window.location.protocol.startsWith('http')) {
+      return endpoint;
+    }
+    return 'http://localhost:8000' + endpoint;
+  }
+
   // --- FETCH MARKET DATA FROM BACKEND ---
   async function fetchMarkets() {
     logDebug('API', 'Fetching live market feeds from /api/markets...');
     try {
-      const resp = await fetch('/api/markets');
+      const resp = await fetch(getApiUrl('/api/markets'));
       if (resp.ok) {
         const data = await resp.json();
         logDebug('API', `Received Polymarket (${data.polymarket_count} events) & Kalshi (${data.kalshi_count} events)`);
@@ -504,7 +512,7 @@
   async function fetchPortfolioTrades() {
     logDebug('API', 'Fetching portfolio trades from SQLite database (/api/trades)...');
     try {
-      const resp = await fetch('/api/trades');
+      const resp = await fetch(getApiUrl('/api/trades'));
       if (resp.ok) {
         state.portfolioTrades = await resp.json();
         logDebug('DB', `Loaded ${state.portfolioTrades.length} saved trades from portfolio.db`);
@@ -519,7 +527,7 @@
   async function saveTradeToDb(trade) {
     logDebug('DB', `Saving locked trade [${trade.id}] to SQLite database...`);
     try {
-      const resp = await fetch('/api/trades', {
+      const resp = await fetch(getApiUrl('/api/trades'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(trade)
@@ -538,7 +546,7 @@
   async function deleteTradeFromDb(tradeId) {
     logDebug('DB', `Deleting trade ${tradeId} from portfolio.db...`);
     try {
-      const resp = await fetch(`/api/trades?id=${tradeId}`, { method: 'DELETE' });
+      const resp = await fetch(getApiUrl(`/api/trades?id=${tradeId}`), { method: 'DELETE' });
       if (resp.ok) {
         logDebug('DB', `Trade ${tradeId} deleted from database.`);
         await fetchPortfolioTrades();
@@ -551,7 +559,7 @@
   async function clearAllTradesFromDb() {
     logDebug('DB', 'Clearing all portfolio trades from portfolio.db...');
     try {
-      const resp = await fetch('/api/trades?all=true', { method: 'DELETE' });
+      const resp = await fetch(getApiUrl('/api/trades?all=true'), { method: 'DELETE' });
       if (resp.ok) {
         logDebug('DB', 'All portfolio trades cleared!');
         await fetchPortfolioTrades();
@@ -1146,7 +1154,7 @@
 
         logDebug('API', `Sending API order payload for ${contracts} pairs of ${market.title}...`);
         try {
-          const resp = await fetch('/api/execute-trade', {
+          const resp = await fetch(getApiUrl('/api/execute-trade'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(trade)
@@ -1158,6 +1166,9 @@
             playAlertChime();
             document.getElementById('riskModal').classList.remove('open');
             await fetchPortfolioTrades();
+          } else {
+            const errData = await resp.json().catch(() => ({}));
+            logDebug('ERROR', `API Execution HTTP error ${resp.status}: ${errData.error || 'Server error'}`);
           }
         } catch (e) {
           logDebug('ERROR', 'API Execution failed: ' + e.message);

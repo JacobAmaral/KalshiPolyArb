@@ -257,10 +257,14 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                 poly_event = p_slug_map.get(pair["poly_slug"])
                 kalshi_event = kalshi_event_map.get(pair["kalshi_event_ticker"])
 
-                # Strict Live Ticker Validation:
-                # If the event ticker does NOT exist in live Kalshi open events API, REJECT IT
+                # Strict Dual Live Event Validation:
+                # Require BOTH the Kalshi event ticker AND the Polymarket event slug to be active open events!
                 if not kalshi_event:
-                    print(f"[REJECT UNLISTED TICKER] Kalshi event ticker '{pair['kalshi_event_ticker']}' is not active on Kalshi Pro API")
+                    print(f"[REJECT UNLISTED KALSHI EVENT] Kalshi event ticker '{pair['kalshi_event_ticker']}' is not active on Kalshi Pro API")
+                    continue
+
+                if not poly_event:
+                    print(f"[REJECT UNLISTED POLY EVENT] Polymarket slug '{pair['poly_slug']}' is not active on Polymarket API")
                     continue
 
                 # Step 4: Extract Live Expiration Timestamps from Both Exchanges
