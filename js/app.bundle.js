@@ -49,123 +49,7 @@
   };
 
   // --- SEED OPPORTUNITIES DATA WITH 100% 1:1 MATCHED DUAL-EXCHANGE CONTRACT DEEP-LINKS & REAL API PRICES ---
-  const seedMarkets = [
-    {
-      id: 'opp-openai-anthropic',
-      title: 'Will OpenAI or Anthropic IPO First?',
-      category: 'CRYPTO',
-      expiry_date: '2026-12-31',
-      kalshi_expiry_date: '2026-12-31',
-      poly_expiry_date: '2026-12-31',
-      expirations_aligned: true,
-      kalshi_ticker: 'KXOAIANTH-40-OAI',
-      poly_ticker: 'POLY-OAI-VS-ANTH',
-      kalshi_url: 'https://pro.kalshi.com/workspace/markets',
-      poly_url: 'https://polymarket.com/event/will-anthropic-or-openai-ipo-first',
-      resolution_verified: true,
-      kalshi_yes: 0.18,
-      kalshi_no: 0.82,
-      poly_yes: 0.11,
-      poly_no: 0.89,
-      volume24h: 246807,
-      depth_k: 57000,
-      depth_p: 246807,
-      price_history_k: [0.22, 0.20, 0.19, 0.18, 0.18, 0.18],
-      price_history_p: [0.15, 0.13, 0.12, 0.11, 0.11, 0.11]
-    },
-    {
-      id: 'opp-ramp-brex',
-      title: 'Fintech IPO Race: Ramp IPOs Before Brex',
-      category: 'CRYPTO',
-      expiry_date: '2026-12-31',
-      kalshi_expiry_date: '2026-12-31',
-      poly_expiry_date: '2026-12-31',
-      expirations_aligned: true,
-      kalshi_ticker: 'KXRAMPBREX-40-RAMP',
-      poly_ticker: 'POLY-RAMP-VS-BREX',
-      kalshi_url: 'https://pro.kalshi.com/workspace/markets',
-      poly_url: 'https://polymarket.com/event/will-ramp-or-brex-ipo-first',
-      resolution_verified: true,
-      kalshi_yes: 0.83,
-      kalshi_no: 0.17,
-      poly_yes: 0.52,
-      poly_no: 0.48,
-      volume24h: 4200000,
-      depth_k: 180000,
-      depth_p: 490000,
-      price_history_k: [0.85, 0.84, 0.83, 0.83, 0.83, 0.83],
-      price_history_p: [0.45, 0.44, 0.43, 0.42, 0.41, 0.41]
-    },
-    {
-      id: 'opp-deel-rippling',
-      title: 'Payroll Tech IPO Race: Deel IPOs Before Rippling',
-      category: 'CRYPTO',
-      expiry_date: '2026-12-31',
-      kalshi_expiry_date: '2026-12-31',
-      poly_expiry_date: '2026-12-31',
-      expirations_aligned: true,
-      kalshi_ticker: 'KXDEELRIP-40-DEEL',
-      poly_ticker: 'POLY-DEEL-VS-RIPPLING',
-      kalshi_url: 'https://pro.kalshi.com/workspace/markets',
-      poly_url: 'https://polymarket.com/event/deel-vs-rippling-ipo-first',
-      resolution_verified: true,
-      kalshi_yes: 0.16,
-      kalshi_no: 0.84,
-      poly_yes: 0.23,
-      poly_no: 0.77,
-      volume24h: 2800000,
-      depth_k: 130000,
-      depth_p: 380000,
-      price_history_k: [0.14, 0.15, 0.16, 0.16, 0.16, 0.16],
-      price_history_p: [0.77, 0.76, 0.75, 0.74, 0.74, 0.74]
-    },
-    {
-      id: 'opp-xi-jinping-out',
-      title: 'Xi Jinping Out as Leader Before 2027',
-      category: 'POLITICS',
-      expiry_date: '2026-12-31',
-      kalshi_expiry_date: '2026-12-31',
-      poly_expiry_date: '2026-12-31',
-      expirations_aligned: true,
-      kalshi_ticker: 'KXXISUCCESSOR-45JAN01',
-      poly_ticker: 'POLY-XI-OUT-2027',
-      kalshi_url: 'https://pro.kalshi.com/workspace/markets',
-      poly_url: 'https://polymarket.com/event/xi-jinping-out-before-2027',
-      resolution_verified: true,
-      kalshi_yes: 0.05,
-      kalshi_no: 0.95,
-      poly_yes: 0.045,
-      poly_no: 0.955,
-      volume24h: 4600000,
-      depth_k: 240000,
-      depth_p: 690000,
-      price_history_k: [0.07, 0.06, 0.05, 0.05, 0.05, 0.05],
-      price_history_p: [0.88, 0.87, 0.86, 0.85, 0.85, 0.85]
-    },
-    {
-      id: 'opp-spacex-mars',
-      title: 'SpaceX Exploration: Crewed Mars Mission by 2030',
-      category: 'CRYPTO',
-      expiry_date: '2029-12-31',
-      kalshi_expiry_date: '2029-12-31',
-      poly_expiry_date: '2029-12-31',
-      expirations_aligned: true,
-      kalshi_ticker: 'KXELONMARS-30',
-      poly_ticker: 'POLY-SPACEX-MARS',
-      kalshi_url: 'https://pro.kalshi.com/workspace/markets',
-      poly_url: 'https://polymarket.com/event/spacex-crewed-mars-landing-by-2030',
-      resolution_verified: true,
-      kalshi_yes: 0.44,
-      kalshi_no: 0.56,
-      poly_yes: 0.52,
-      poly_no: 0.48,
-      volume24h: 3100000,
-      depth_k: 150000,
-      depth_p: 420000,
-      price_history_k: [0.39, 0.40, 0.41, 0.41, 0.41, 0.41],
-      price_history_p: [0.52, 0.51, 0.50, 0.49, 0.49, 0.49]
-    }
-  ];
+  const seedMarkets = [];
 
   // --- UTILITY FUNCTIONS ---
   function getTimeString() {
@@ -476,31 +360,15 @@
         const data = await resp.json();
         logDebug('API', `Received Polymarket (${data.polymarket_count} events) & Kalshi (${data.kalshi_count} events)`);
         
-        if (data.opportunities && data.opportunities.length > 0) {
-          const liveMap = new Map();
-          data.opportunities.forEach(item => {
-            liveMap.set(item.kalshi_ticker, item);
-          });
-
-          state.opportunities = state.opportunities.map(m => {
-            const liveMatch = liveMap.get(m.kalshi_ticker);
-            if (liveMatch) {
-              const updated = {
-                ...m,
-                poly_yes: liveMatch.poly_yes,
-                poly_no: liveMatch.poly_no,
-                poly_url: liveMatch.poly_url,
-                kalshi_yes: liveMatch.kalshi_yes,
-                kalshi_no: liveMatch.kalshi_no
-              };
-              updated.arb = calculateArbitrage(updated);
-              return updated;
-            }
-            return m;
+        if (Array.isArray(data.opportunities)) {
+          state.opportunities = data.opportunities.map(item => {
+            const updated = { ...item };
+            updated.arb = calculateArbitrage(updated);
+            return updated;
           });
 
           renderUI();
-          logDebug('API', `Updated ${data.opportunities.length} live opportunities with real-time REST API order book prices!`);
+          logDebug('API', `Updated ${state.opportunities.length} live verified opportunities from scanner!`);
         }
       }
     } catch (e) {
