@@ -36,7 +36,7 @@
   const state = {
     opportunities: [],       // Active market pairs being scanned
     portfolioTrades: [],     // Locked trades fetched from SQLite database
-    audioEnabled: true,      // Web Audio sound toggle status
+    audioEnabled: false,     // Web Audio sound toggle status (Default: MUTED/OFF)
     activeCategory: 'ALL',   // Active category tab filter ('ALL', 'MACRO', 'POLITICS', 'CRYPTO')
     searchQuery: '',         // Title / ticker search query string
     minRoiFilter: 0.0,       // Minimum ROI filter slider threshold
