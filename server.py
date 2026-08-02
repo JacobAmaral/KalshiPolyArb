@@ -292,6 +292,12 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                         except Exception:
                             pass
 
+                # Step 7: Price Sanity & Order Book Liquidity Verification
+                # Rejects zero-price glitches ($0.00 ask) or illiquid market books (prices <= $0.01 or >= $0.99)
+                if p_yes_live <= 0.01 or p_no_live <= 0.01 or k_yes_live <= 0.01 or k_no_live <= 0.01:
+                    print(f"[REJECT ILLIQUID PRICE] Zero/illiquid price detected for '{pair['title']}': Poly YES={p_yes_live}, Poly NO={p_no_live}, Kalshi YES={k_yes_live}, Kalshi NO={k_no_live}")
+                    continue
+
                 matched_feed.append({
                     "id": f"opp-live-{pair['entity'].replace(' ', '-')}",
                     "title": pair["title"],
