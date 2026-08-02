@@ -245,15 +245,6 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
                     "kalshi_event_ticker": "KXNEXTISRAELPM",
                     "poly_slug": "netanyahu-out-before-2027",
                     "default_k_yes": 0.35, "default_k_no": 0.65, "default_p_yes": 0.42, "default_p_no": 0.58
-                },
-                {
-                    "entity": "forecastex fed funds",
-                    "title": "ForecastEx / Kalshi Fed Funds Target Rate 2026",
-                    "category": "MACRO",
-                    "kalshi_event_ticker": "KXFEDFUNDSYEAR",
-                    "poly_slug": "how-many-fed-rate-cuts-in-2026",
-                    "forecastex_ticker": "FE-FEDFUNDS-2026",
-                    "default_k_yes": 0.39, "default_k_no": 0.61, "default_p_yes": 0.38, "default_p_no": 0.62
                 }
             ]
 
