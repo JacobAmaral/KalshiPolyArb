@@ -29,6 +29,7 @@ License: MIT
 
 import os
 import sys
+import time
 import json
 import sqlite3
 import urllib.request
@@ -37,6 +38,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 PORT = 8000
 DB_FILE = "portfolio.db"
+PREDICTIT_CACHE = {"data": [], "timestamp": 0}
+CACHE_TTL_PREDICTIT = 60
 
 
 def init_db():
@@ -174,18 +177,26 @@ class ArbitrageHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 print("[API WARN] Kalshi API fetch warning:", str(e))
 
-            # Step 3: Fetch Live Open Markets from PredictIt REST API
-            try:
-                req = urllib.request.Request(
-                    "https://www.predictit.org/api/marketdata/all/",
-                    headers={"User-Agent": "Mozilla/5.0"}
-                )
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    if resp.status == 200:
-                        pi_raw = json.loads(resp.read().decode("utf-8"))
-                        predictit_events = pi_raw.get("markets", [])
-            except Exception as e:
-                print("[API WARN] PredictIt API fetch warning:", str(e))
+            # Step 3: Fetch Live Open Markets from PredictIt REST API (cached for 60s to respect rate limits)
+            now = time.time()
+            if PREDICTIT_CACHE["data"] and (now - PREDICTIT_CACHE["timestamp"] < CACHE_TTL_PREDICTIT):
+                predictit_events = PREDICTIT_CACHE["data"]
+            else:
+                try:
+                    req = urllib.request.Request(
+                        "https://www.predictit.org/api/marketdata/all/",
+                        headers={"User-Agent": "Mozilla/5.0"}
+                    )
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        if resp.status == 200:
+                            pi_raw = json.loads(resp.read().decode("utf-8"))
+                            predictit_events = pi_raw.get("markets", [])
+                            PREDICTIT_CACHE["data"] = predictit_events
+                            PREDICTIT_CACHE["timestamp"] = now
+                except Exception as e:
+                    if PREDICTIT_CACHE["data"]:
+                        predictit_events = PREDICTIT_CACHE["data"]
+                    print("[API WARN] PredictIt API fetch warning:", str(e))
 
             # Step 4: Dynamic 4-Way Cross-Exchange Matcher (Kalshi, Polymarket, PredictIt, ForecastEx)
             matched_feed = []
