@@ -229,15 +229,22 @@
    * @returns {Object} Structured arbitrage evaluation payload including optimal strategy leg parameters.
    */
   function calculateArbitrage(market) {
-    // Option A Strategy: Kalshi YES + Polymarket NO
-    const costA = market.kalshi_yes + market.poly_no;
+    const leg1_plat = market.leg1_platform || 'Kalshi';
+    const leg2_plat = market.leg2_platform || 'Polymarket';
+    const l1_yes = market.leg1_yes !== undefined ? market.leg1_yes : market.kalshi_yes;
+    const l1_no = market.leg1_no !== undefined ? market.leg1_no : market.kalshi_no;
+    const l2_yes = market.leg2_yes !== undefined ? market.leg2_yes : market.poly_yes;
+    const l2_no = market.leg2_no !== undefined ? market.leg2_no : market.poly_no;
+
+    // Option A Strategy: Platform 1 YES + Platform 2 NO
+    const costA = l1_yes + l2_no;
     const grossProfitA = 1.00 - costA;
     const feeA = costA * 0.01; // 1.0% total fee allowance
     const netProfitA = grossProfitA - feeA;
     const netRoiA = (netProfitA / costA) * 100;
 
-    // Option B Strategy: Kalshi NO + Polymarket YES
-    const costB = market.kalshi_no + market.poly_yes;
+    // Option B Strategy: Platform 1 NO + Platform 2 YES
+    const costB = l1_no + l2_yes;
     const grossProfitB = 1.00 - costB;
     const feeB = costB * 0.01; // 1.0% total fee allowance
     const netProfitB = grossProfitB - feeB;
@@ -255,12 +262,12 @@
     if (netRoiA >= netRoiB) {
       return {
         optionName: 'Option A',
-        leg1_platform: 'Kalshi',
+        leg1_platform: leg1_plat,
         leg1_side: 'YES',
-        leg1_price: market.kalshi_yes,
-        leg2_platform: 'Polymarket',
+        leg1_price: l1_yes,
+        leg2_platform: leg2_plat,
         leg2_side: 'NO',
-        leg2_price: market.poly_no,
+        leg2_price: l2_no,
         total_cost: costA,
         gross_profit: grossProfitA,
         net_profit: netProfitA,
@@ -271,12 +278,12 @@
     } else {
       return {
         optionName: 'Option B',
-        leg1_platform: 'Kalshi',
+        leg1_platform: leg1_plat,
         leg1_side: 'NO',
-        leg1_price: market.kalshi_no,
-        leg2_platform: 'Polymarket',
+        leg1_price: l1_no,
+        leg2_platform: leg2_plat,
         leg2_side: 'YES',
-        leg2_price: market.poly_yes,
+        leg2_price: l2_yes,
         total_cost: costB,
         gross_profit: grossProfitB,
         net_profit: netProfitB,
@@ -517,7 +524,8 @@
 
     grid.innerHTML = filtered.map(m => {
       const arb = m.arb;
-      const isLeg1Kalshi = arb.leg1_platform === 'Kalshi';
+      const p1Color = arb.leg1_platform === 'PredictIt' ? '#ffb703' : (arb.leg1_platform === 'Kalshi' ? '#8b5cf6' : '#00d8ff');
+      const p2Color = arb.leg2_platform === 'Polymarket' ? '#00d8ff' : (arb.leg2_platform === 'PredictIt' ? '#ffb703' : '#8b5cf6');
 
       return `
         <div class="opp-card">
@@ -530,7 +538,7 @@
                 </span>
               </div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono);">
-                📅 <strong>Kalshi Exp:</strong> ${m.kalshi_expiry_date || m.expiry_date} &nbsp;•&nbsp; <strong>Poly Exp:</strong> ${m.poly_expiry_date || m.expiry_date} (${arb.days_to_expiry}d left)
+                📅 <strong>${arb.leg1_platform} Exp:</strong> ${m.platform1_expiry_date || m.kalshi_expiry_date || m.expiry_date} &nbsp;•&nbsp; <strong>${arb.leg2_platform} Exp:</strong> ${m.platform2_expiry_date || m.poly_expiry_date || m.expiry_date} (${arb.days_to_expiry}d left)
               </div>
               <span class="opp-category" style="margin-top: 2px;">${m.category}</span>
             </div>
@@ -545,8 +553,8 @@
           </div>
 
           <div class="legs-container">
-            <div class="leg-box" style="border-color: ${isLeg1Kalshi ? 'rgba(139, 92, 246, 0.4)' : 'rgba(0, 216, 255, 0.4)'}">
-              <div class="leg-platform ${isLeg1Kalshi ? 'kalshi-text' : 'poly-text'}">
+            <div class="leg-box" style="border-color: ${p1Color}66;">
+              <div class="leg-platform" style="color: ${p1Color};">
                 ${arb.leg1_platform}
                 <span style="font-size: 9px; opacity: 0.8;">LEG 1</span>
               </div>
@@ -556,8 +564,8 @@
               </div>
             </div>
 
-            <div class="leg-box" style="border-color: ${!isLeg1Kalshi ? 'rgba(139, 92, 246, 0.4)' : 'rgba(0, 216, 255, 0.4)'}">
-              <div class="leg-platform ${!isLeg1Kalshi ? 'kalshi-text' : 'poly-text'}">
+            <div class="leg-box" style="border-color: ${p2Color}66;">
+              <div class="leg-platform" style="color: ${p2Color};">
                 ${arb.leg2_platform}
                 <span style="font-size: 9px; opacity: 0.8;">LEG 2</span>
               </div>
@@ -577,9 +585,8 @@
           <div class="opp-actions" style="flex-wrap: wrap;">
             <button class="btn-card-action btn-open-chart" data-id="${m.id}" style="flex: 1 1 45%;">📈 Chart</button>
             <button class="btn-card-action btn-primary-action btn-open-sim" data-id="${m.id}" style="flex: 1 1 45%;">⚡ Calculate ($1k)</button>
-            <a href="https://pro.kalshi.com/workspace/markets" target="_blank" class="btn-card-action" style="flex: 1 1 30%; text-decoration: none; color: var(--accent-purple); border-color: rgba(139, 92, 246, 0.6); font-weight: 700; display: flex; align-items: center; justify-content: center;">Kalshi Pro ↗</a>
-            <a href="https://kalshi.com/markets" target="_blank" class="btn-card-action" style="flex: 1 1 30%; text-decoration: none; color: var(--text-muted); border-color: var(--border-glass); display: flex; align-items: center; justify-content: center;">Kalshi ↗</a>
-            <a href="${m.poly_url || 'https://polymarket.com'}" target="_blank" class="btn-card-action" style="flex: 1 1 30%; text-decoration: none; color: var(--accent-cyan); border-color: rgba(0, 216, 255, 0.6); font-weight: 700; display: flex; align-items: center; justify-content: center;">Poly Event ↗</a>
+            <a href="${m.kalshi_url || m.leg1_url || 'https://pro.kalshi.com'}" target="_blank" class="btn-card-action" style="flex: 1 1 45%; text-decoration: none; color: ${p1Color}; border-color: ${p1Color}88; font-weight: 700; display: flex; align-items: center; justify-content: center;">${arb.leg1_platform} ↗</a>
+            <a href="${m.poly_url || m.leg2_url || 'https://polymarket.com'}" target="_blank" class="btn-card-action" style="flex: 1 1 45%; text-decoration: none; color: ${p2Color}; border-color: ${p2Color}88; font-weight: 700; display: flex; align-items: center; justify-content: center;">${arb.leg2_platform} ↗</a>
           </div>
         </div>
       `;
